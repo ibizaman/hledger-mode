@@ -187,6 +187,12 @@ choose to do the componding quarterly.  Configure
 (defvar hledger-ratios-summary nil
   "Summary for the ratios in overall report.")
 
+(defcustom hledger-report-delete-other-windows
+  t
+  "If set to nil, does not delete other windows when showing a report."
+  :group 'hledger
+  :type 'boolean)
+
 (defun hledger-format-time (time)
   "Format TIME in \"%Y-%m-%d\"."
   (format-time-string "%Y-%m-%d" time))
@@ -302,8 +308,9 @@ non-nil, it lands us in the `hledger-mode' ."
       (`"daily" (hledger-daily-report))
       (`"overall" (hledger-overall-report)
        (pop-to-buffer hledger-reporting-buffer-name)
-       (delete-other-windows))
-      (`"balancesheet" (hledger-jdo (concat "balancesheet --end "
+	   (when hledger-report-delete-other-windows
+		 (delete-other-windows)))
+	  (`"balancesheet" (hledger-jdo (concat "balancesheet --end "
                                             (hledger-end-date (current-time)))))
       ;; Allow account completion for
       (command (if (and (member command '("balance" "register"))
@@ -366,7 +373,8 @@ easily."
       (if bury-bufferp
           (bury-buffer jbuffer)
         (pop-to-buffer jbuffer)
-        (delete-other-windows))
+		(when hledger-report-delete-other-windows
+		  (delete-other-windows)))
       (setq header-line-format
             (format "Generated on: %s | %s"
                     (hledger-friendlier-time (current-time))
@@ -420,7 +428,8 @@ Works only for register command."
   (interactive "spattern> ")
   (let ((jcmd (concat "register -w 150 " pattern)))
     (hledger-jdo jcmd)
-    (delete-other-windows)))
+	(when hledger-report-delete-other-windows
+	  (delete-other-windows))))
 
 (defun hledger-daily-report ()
   "Report for today's expenses.
@@ -532,8 +541,9 @@ isn't switched to."
     (when (not bury-bufferp)
       ;; This is because the running report is usually very wide.
       (pop-to-buffer (hledger-get-perfin-buffer t))
-      (delete-other-windows))
-    (with-current-buffer (hledger-get-perfin-buffer t)
+	  (when hledger-report-delete-other-windows
+		(delete-other-windows)))
+	(with-current-buffer (hledger-get-perfin-buffer t)
       ;; Let's sort according to the average column now
       (ignore-errors (while (not (looking-at "=="))
                        (forward-line))
